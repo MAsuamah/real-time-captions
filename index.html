@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAI Real-Time Video Captions</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+<body>
+  <header>
+    <h1 class="header-title">Real-Time Video Captions</h1>
+    <p class="header-sub-title">Get real-time captions using AssemblyAI's transcription endpoint!</p>
+  </header>
+  
+  <div id="buttons">
+    <button id="btn-start-recording">Start Recording</button>
+    <button id="btn-stop-recording" disabled>Stop Recording</button>
+  </div>
+
+ 
+
+  <hr>
+ 
+  <div id="video">
+    <video id="video" controls autoplay playsinline></video>
+  </div>
+  
+
+  <div class="real-time-interface">
+    <p id="captions" class="captions"></p>
+  </div>
+  
+  <script src="./index.js"></script>
+</body>
+</html>
