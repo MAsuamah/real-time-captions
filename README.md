@@ -19,7 +19,12 @@ This app uses a web camera to record live video. It will also grab an audio stre
 1. Clone the repo to your local machine.
 2. Open the terminal in the root directory of the project.
 3. Run `npm install` to install all dependencies.
-4. In the server.js file (found in the js folder), add your AssemblyAI key to line 13.
+4. Create a `.env` file in the project root and add this line with your API Key
+
+```
+API_KEY=<YOUR API KEY HERE>
+```
+
 5. While still in the root directory, start the server with the command `npm run start` (will run on port 8000).
 6. Open a second terminal in the root directory of the project and start the client side with `npm run client` (will run on port 3000).
 7. Navigate to http://localhost:3000 in your browser and click "Start Recording" to see the live captions!
@@ -28,3 +33,5 @@ This app uses a web camera to record live video. It will also grab an audio stre
 
 - [AssemblyAI Real-Time Documention](https://docs.assemblyai.com/overview/real-time-transcription)
 - [recordrtc](https://www.npmjs.com/package/recordrtc)
+- [Express](https://expressjs.com/)
+- [dotenv](https://www.npmjs.com/package/dotenv)
