@@ -1,12 +1,20 @@
+// required dom elements
 const video = document.querySelector('video');
 const captions = document.getElementById('captions');
+const startButton = document.getElementById('btn-start-recording');
+const stopButton = document.getElementById('btn-stop-recording');
+
+// set initial state of application variables
 let socket;
 let recorder;
 captions.style.display = 'none';
 
+// Gets access to the webcam and microphone
 const captureCamera = (callback) => {
-  navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    .then(camera => callback(camera))
+  navigator.mediaDevices.getUserMedia({ audio: true, video: { width: 1480, height: 720 } })
+    .then(camera => {
+      callback(camera)
+    })
     .catch(error => {
       alert('Unable to capture your camera. Please check console logs.');
       console.error(error);
@@ -14,6 +22,7 @@ const captureCamera = (callback) => {
   );
 }
 
+// Stops recording and ends real-time session. 
 const stopRecordingCallback = () => {
   socket.send(JSON.stringify({terminate_session: true}));
   socket.close();
@@ -24,10 +33,12 @@ const stopRecordingCallback = () => {
   recorder = null;
 }
 
-document.getElementById('btn-start-recording').onclick = async function () {
+//Starts real-time session and trasncription
+startButton.onclick = async function () {
   this.disabled = true;
-
-  const response = await fetch('http://localhost:8000'); 
+  this.innerText = 'Camera Loading...'
+  
+  const response = await fetch('http://localhost:8000'); // get temp session token from server.js (backend)
   const data = await response.json();
 
   if(data.error){
@@ -36,23 +47,26 @@ document.getElementById('btn-start-recording').onclick = async function () {
 
   const { token } = data;
 
+  // establish wss with AssemblyAI (AAI) at 16000 sample rate
   socket = await new WebSocket(`wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`);
 
+  // handle incoming messages to display captions on screen
   const texts = {};
-
   socket.onmessage = (message) => {
     let msg = '';
     const res = JSON.parse(message.data);
-    console.log(res)
     texts[res.audio_start] = res.text;
     const keys = Object.keys(texts);
     keys.sort((a, b) => a - b);
     for (const key of keys) {
       if (texts[key]) {
-        msg += ` ${texts[key]}`;
+        if (msg.split(' ').length > 6) {
+          msg = ''
+        }  
+        msg += ` ${texts[key]}`;     
       }
     }
-    captions.innerText = msg;
+    captions.innerText = msg; 
   };
 
   socket.onerror = (event) => {
@@ -62,23 +76,26 @@ document.getElementById('btn-start-recording').onclick = async function () {
   
   socket.onclose = event => {
     console.log(event);
+    captions.innerText = ''
     socket = null;
   }
 
   socket.onopen = () => {
     captureCamera(function(camera) {
-        video.controls = false
+        startButton.innerText = 'Start Recording'
+        video.controls = false;
         video.muted = true;
         video.volume = 0;
         video.srcObject = camera;
 
         captions.style.display = '';
 
+        // once socket is open, create a new recorder object and start recording (specifications must match real-time requirements)
         recorder = new RecordRTC(camera, {
             type: 'audio',
-            mimeType: 'audio/;codecs=pcm', // endpoint requires 16bit PCM audio
+            mimeType: 'audio/webm;codecs=pcm', // endpoint requires 16bit PCM audio
             recorderType: StereoAudioRecorder,
-            timeSlice: 300, // set 250 ms intervals of data that sends to AAI
+            timeSlice: 250, // set 250 ms intervals of data that sends to AAI
             desiredSampRate: 16000,
             numberOfAudioChannels: 1, // real-time requires only one channel
             bufferSize: 4096,
@@ -101,14 +118,13 @@ document.getElementById('btn-start-recording').onclick = async function () {
 
         // release camera on stopRecording
         recorder.camera = camera;
-
-        document.getElementById('btn-stop-recording').disabled = false;
+        stopButton.disabled = false;
     });
   }
 };
 
-document.getElementById('btn-stop-recording').onclick = function() {
+stopButton.onclick = function() {
   this.disabled = true;
   recorder.stopRecording(stopRecordingCallback);
-  document.getElementById('btn-start-recording').disabled = false;
+  startButton.disabled = false;
 };
